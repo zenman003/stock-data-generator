@@ -1,0 +1,111 @@
+package org.example;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+
+public class YahooFinanceAPI {
+    public static void main(String[] args) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("https://query1.finance.yahoo.com/v8/finance/chart/NVDA?period1=1718407200&period2=1718692200&interval=5m&includePrePost=true&events=div%7Csplit%7Cearn&&lang=en-US&region=US"))
+                .header("accept", "*/*")
+                .header("accept-language", "en-GB,en-US;q=0.9,en;q=0.8")
+                .header("origin", "https://finance.yahoo.com")
+                .header("referer", "https://finance.yahoo.com/quote/NVDA/")
+                .header("sec-ch-ua", "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"")
+                .header("sec-ch-ua-mobile", "?0")
+                .header("sec-ch-ua-platform", "\"macOS\"")
+                .header("sec-fetch-dest", "empty")
+                .header("sec-fetch-mode", "cors")
+                .header("sec-fetch-site", "same-site")
+                .header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String responseBody = response.body();
+        System.out.println(responseBody);
+
+        // Parse the response
+        parseJson(responseBody);
+    }
+
+    public static void parseJson(String jsonString) {
+        // Parse the JSON response
+        JSONObject jsonObj = new JSONObject(jsonString);
+        JSONObject chart = jsonObj.getJSONObject("chart");
+        JSONObject result = chart.getJSONArray("result").getJSONObject(0);
+        JSONObject meta = result.getJSONObject("meta");
+
+        // Extract additional data from the meta object
+        double fiftyTwoWeekHigh = meta.getDouble("fiftyTwoWeekHigh");
+        double fiftyTwoWeekLow = meta.getDouble("fiftyTwoWeekLow");
+        long regularMarketVolume = meta.getLong("regularMarketVolume");
+
+        // Print additional data
+        System.out.println("Fifty-Two Week High: " + fiftyTwoWeekHigh);
+        System.out.println("Fifty-Two Week Low: " + fiftyTwoWeekLow);
+        System.out.println("Regular Market Volume: " + regularMarketVolume);
+
+        // Extract data for latest timestamp as before
+        JSONArray timestamp = result.getJSONArray("timestamp");
+        JSONObject indicators = result.getJSONObject("indicators");
+        JSONObject quote = indicators.getJSONArray("quote").getJSONObject(0);
+        JSONArray close = quote.getJSONArray("close");
+        JSONArray open = quote.getJSONArray("open");
+        JSONArray high = quote.getJSONArray("high");
+        JSONArray low = quote.getJSONArray("low");
+        JSONArray volume = quote.getJSONArray("volume");
+
+        // Get the latest data
+        int lastIndex = timestamp.length() - 1;
+        long latestTimestamp = timestamp.getLong(lastIndex);
+        double latestOpen = open.getDouble(lastIndex);
+        double latestHigh = high.getDouble(lastIndex);
+        double latestLow = low.getDouble(lastIndex);
+        double latestClose = close.getDouble(lastIndex);
+        double latestVolume = volume.getDouble(lastIndex);
+
+        // Print the latest data
+        System.out.println("Latest Data:");
+        System.out.println("Timestamp: " + latestTimestamp);
+        System.out.println("Open: " + latestOpen);
+        System.out.println("High: " + latestHigh);
+        System.out.println("Low: " + latestLow);
+        System.out.println("Close: " + latestClose);
+        System.out.println("Volume: " + latestVolume);
+    }
+}
+curl 'https://query1.finance.yahoo.com/v8/finance/chart/{company_symbol}?period1=1718407200&period2=1718695800&interval=5m&includePrePost=true&events=div%7Csplit%7Cearn&&lang=en-US&region=US' \
+  -H 'accept: */*' \
+  -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
+  -H 'cookie: {your_cookie}' \
+  -H 'origin: https://finance.yahoo.com' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://finance.yahoo.com/quote/{company_symbol}/' \
+  -H 'sec-ch-ua: "Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+
+ curl 'https://query2.finance.yahoo.com/v8/finance/chart/NVDA?period1=1718407200&period2=1718739000&interval=5m&includePrePost=true&events=div%7Csplit%7Cearn&&lang=en-US&region=US' \
+   -H 'accept: */*' \
+   -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
+   -H 'cookie: A3=d=AQABBP1PaGYCEDYIOMNOknHVeTaB6RlvoPEFEgEBAQGhaWZyZlk6QDIB_eMAAA&S=AQAAAufDKuNN-llm7w9NSULMk0I; A1=d=AQABBP1PaGYCEDYIOMNOknHVeTaB6RlvoPEFEgEBAQGhaWZyZlk6QDIB_eMAAA&S=AQAAAufDKuNN-llm7w9NSULMk0I; axids=gam=y-HqoSNi1E2uJkuTZej_Os.l9uVBNuGVP.~A&dv360=eS1aSnUzcS5aRTJ1SDU1b01mbzdWMXVxUlpZSndObE9vMX5B&ydsp=y-Z6yi_WFE2uLli7rI75CJihDdrcu5QPxn~A&tbla=y-oLvcPlFE2uI3fSVeHCqViiqyaI.URyZH~A; tbla_id=3a8924d3-8c34-4a94-82dd-8807ba950adc-tuctd61d57d; A1S=d=AQABBP1PaGYCEDYIOMNOknHVeTaB6RlvoPEFEgEBAQGhaWZyZlk6QDIB_eMAAA&S=AQAAAufDKuNN-llm7w9NSULMk0I; gpp=DBAA; gpp_sid=-1; PRF=t%3DAAPL%252BNVDA; cmp=t=1718719995&j=0&u=1---; _chartbeat4=t=CVA1yBkR-9bBNSC-bChdHrwBg9rOB&E=12&x=0&c=775.13&y=7446&w=755' \
+   -H 'origin: https://finance.yahoo.com' \
+   -H 'priority: u=1, i' \
+   -H 'referer: https://finance.yahoo.com/quote/NVDA/' \
+   -H 'sec-ch-ua: "Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"' \
+   -H 'sec-ch-ua-mobile: ?0' \
+   -H 'sec-ch-ua-platform: "macOS"' \
+   -H 'sec-fetch-dest: empty' \
+   -H 'sec-fetch-mode: cors' \
+   -H 'sec-fetch-site: same-site' \
+   -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
