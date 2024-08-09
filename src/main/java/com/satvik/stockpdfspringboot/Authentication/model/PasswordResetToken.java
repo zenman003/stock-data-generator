@@ -14,6 +14,8 @@ import java.util.Date;
 
 @Table(name = "password_reset_token")
 @Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 public class PasswordResetToken {
@@ -51,6 +53,11 @@ public class PasswordResetToken {
 
     public boolean isExpired(){
         return new Date().after(expiryDate);
+    }
+
+    public void updateToken(String token){
+        this.token = token;
+        this.expiryDate = calculateExpiryDate(expiryInMinutes);
     }
 
 }

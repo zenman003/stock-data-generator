@@ -1,7 +1,6 @@
 package com.satvik.stockpdfspringboot.Authentication.controller;
 
 
-import com.satvik.stockpdfspringboot.Authentication.dto.ForgotPassWordDto;
 import com.satvik.stockpdfspringboot.Authentication.dto.PasswordResetDto;
 import com.satvik.stockpdfspringboot.Authentication.model.PasswordResetToken;
 import com.satvik.stockpdfspringboot.Authentication.repositories.PasswordTokenRepository;
@@ -11,13 +10,15 @@ import com.satvik.stockpdfspringboot.User.model.User;
 import com.satvik.stockpdfspringboot.User.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
-@RestController("/api")
+@Slf4j
+@RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PasswordChangeController {
 
@@ -25,6 +26,7 @@ public class PasswordChangeController {
     private final UserService userService;
     private final PasswordTokenRepository passwordTokenRepository;
     private final PasswordResetService passwordResetService;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> passwordReset(@RequestParam String email, HttpServletRequest request) {
@@ -41,6 +43,7 @@ public class PasswordChangeController {
 
     @PostMapping("/confirm-password-token")
     public ResponseEntity<String> confirmToken(@RequestParam("token") String token) {
+        log.info("Confirming password reset token");
         PasswordResetToken passwordResetToken = passwordTokenRepository.findByToken(token);
         if(passwordResetToken == null) {
             return ResponseEntity.badRequest().body("Token is invalid");
@@ -49,6 +52,7 @@ public class PasswordChangeController {
             return ResponseEntity.badRequest().body("Token has expired");
         }
         passwordResetToken.setEnabled(true);
+        log.info("Password reset token confirmed");
         return ResponseEntity.ok("Token is valid");
     }
 
@@ -62,13 +66,10 @@ public class PasswordChangeController {
         if(passwordResetToken.isExpired()) {
             return ResponseEntity.badRequest().body("Token has expired");
         }
-        if(!passwordResetToken.isEnabled()) {
-            return ResponseEntity.badRequest().body("Token is not enabled");
-        }
         User user = passwordResetToken.getUser();
-        user.setPassword(passwordResetDto.getPassword());
+        user.setPassword(passwordEncoder.encode(passwordResetDto.getPassword()));
         userService.save(user);
-        passwordResetToken.setEnabled(false);
+        passwordTokenRepository.delete(passwordResetToken);
         return ResponseEntity.ok("Password changed successfully");
     }
 }

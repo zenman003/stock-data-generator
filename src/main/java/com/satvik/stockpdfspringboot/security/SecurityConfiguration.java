@@ -33,7 +33,7 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("api/**").permitAll() // Allow unauthenticated access to register and login
-                        .requestMatchers("api/forgot-password").permitAll()
+//                        .requestMatchers("api/forgot-password").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
