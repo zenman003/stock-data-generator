@@ -1,6 +1,7 @@
 package com.satvik.stockpdfspringboot.Authentication.util;
 
 import com.satvik.stockpdfspringboot.Authentication.model.VerificationToken;
+import com.satvik.stockpdfspringboot.Authentication.service.VerificationService;
 import com.satvik.stockpdfspringboot.User.model.User;
 import com.satvik.stockpdfspringboot.User.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class RegistrationListener implements ApplicationListener<OnRegistrationComplete> {
 
     private final UserService userService;
+    private final VerificationService verificationService;
     private final MessageSource messageSource;
     private final JavaMailSender mailSender;
 
@@ -34,9 +36,9 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
         String token;
         if (user.getVerificationToken() == null) {
             token = UUID.randomUUID().toString();
-            userService.createVerificationToken(user, token);
+            verificationService.createVerificationToken(user, token);
         } else {
-            userService.generateNewVerificationToken(user.getUsername());
+            verificationService.generateNewVerificationToken(user.getUsername());
             token = user.getVerificationToken().getToken();
         }
 

@@ -2,6 +2,7 @@ package com.satvik.stockpdfspringboot.Authentication.controller;
 
 import com.satvik.stockpdfspringboot.Authentication.dto.LoginDto;
 import com.satvik.stockpdfspringboot.Authentication.dto.RegisterDto;
+import com.satvik.stockpdfspringboot.Authentication.service.VerificationService;
 import com.satvik.stockpdfspringboot.User.model.User;
 import com.satvik.stockpdfspringboot.Authentication.model.VerificationToken;
 import com.satvik.stockpdfspringboot.User.service.UserService;
@@ -16,11 +17,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.WebRequest;
 
 import java.util.Calendar;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +31,7 @@ public class AuthController {
     private final JwtGenerator jwtGenerator;
     private final LinkedHashSet<Long> unVerifiedUsers;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final VerificationService verificationService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody  RegisterDto registerDto, HttpServletRequest request) {
@@ -57,7 +57,7 @@ public class AuthController {
 
     @GetMapping("/registrationConfirm")
     public ResponseEntity<String> confirmRegistration(@RequestParam("token") String token){
-        VerificationToken verificationToken = userService.getVerificationToken(token);
+        VerificationToken verificationToken = verificationService.getVerificationToken(token);
         if (verificationToken == null) {
             return ResponseEntity.badRequest().body("Invalid token");
         }
@@ -74,9 +74,9 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/resendRegistrationToken", method = RequestMethod.POST)
-    public ResponseEntity<String> resendRegistrationToken(@RequestBody LoginDto loginDto, HttpServletRequest request) {
+    public ResponseEntity<String> resendRegistrationToken(@RequestParam("username") String userName, HttpServletRequest request) {
         String appUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()+"/api";
-        User user =userService.findByUsername(loginDto.getUsername());
+        User user =userService.findByUsername(userName);
         if(user == null){
             return ResponseEntity.badRequest().body("User not found");
         }

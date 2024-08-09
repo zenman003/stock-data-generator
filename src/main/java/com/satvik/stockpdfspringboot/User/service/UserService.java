@@ -1,7 +1,9 @@
 package com.satvik.stockpdfspringboot.User.service;
 
 import com.satvik.stockpdfspringboot.Authentication.dto.RegisterDto;
+import com.satvik.stockpdfspringboot.Authentication.model.PasswordResetToken;
 import com.satvik.stockpdfspringboot.Authentication.model.VerificationToken;
+import com.satvik.stockpdfspringboot.Authentication.repositories.PasswordTokenRepository;
 import com.satvik.stockpdfspringboot.Authentication.repositories.VerificationTokenRepository;
 import com.satvik.stockpdfspringboot.User.model.User;
 import com.satvik.stockpdfspringboot.User.repository.UserRepository;
@@ -14,14 +16,15 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final LinkedHashMap<Long, Date> unVerifiedUsers;
+    private final PasswordTokenRepository passwordTokenRepository;
 
-    @Transactional
     public User saveRegisteredUser(RegisterDto registerDto) {
         if (userRepository.findByUsername(registerDto.getUsername()) != null) {
             throw new IllegalArgumentException("Username already exists");
@@ -47,17 +50,6 @@ public class UserService {
         return user;
     }
 
-    @Transactional
-    public void createVerificationToken(User user, String token) {
-        VerificationToken verificationToken = new VerificationToken(token, user);
-        verificationTokenRepository.save(verificationToken);
-    }
-
-    public VerificationToken getVerificationToken(String token) {
-        return verificationTokenRepository.findByToken(token);
-    }
-
-    @Transactional
     public void saveRegisteredUser(User user) {
         userRepository.save(user);
     }
@@ -70,14 +62,19 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public void generateNewVerificationToken(String username) {
-        User user = userRepository.findByUsername(username);
+    public User findByEmail(String email) {
+        User user = userRepository.findByEmailIgnoreCase(email);
         if (user == null) {
             throw new IllegalArgumentException("User not found");
         }
-        VerificationToken token = user.getVerificationToken();
-        String newToken = UUID.randomUUID().toString();
-        token.updateToken(newToken);
-        verificationTokenRepository.save(token);
+        return user;
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public void save(User user) {
+        userRepository.save(user);
     }
 }

@@ -1,6 +1,7 @@
 package com.satvik.stockpdfspringboot.User.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.satvik.stockpdfspringboot.Authentication.model.PasswordResetToken;
 import com.satvik.stockpdfspringboot.Authentication.model.VerificationToken;
 import com.satvik.stockpdfspringboot.Excel.UserStock;
 import com.satvik.stockpdfspringboot.Authentication.util.ExtendedEmailValidator;
@@ -37,7 +38,7 @@ public class User {
     private String role;
 
     private boolean enabled;
-
+    
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<UserStock> userStocks;
@@ -46,6 +47,10 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private VerificationToken verificationToken;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private PasswordResetToken passwordResetToken;
 
     public User(){
         this.enabled=false;
